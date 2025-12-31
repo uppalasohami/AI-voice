@@ -32,6 +32,21 @@ export default function ScheduledInterview() {
 
     fetchInterviews();
   }, [user]);
+  useEffect(() => {
+    if (user !== null) return; // only when no user
+
+    const fetchAllInterviews = async () => {
+      const { data, error } = await supabase
+        .from("Interviews")
+        .select("*")
+        .order("id", { ascending: false });
+
+      console.log("FETCHED ALL INTERVIEWS (FALLBACK):", data, error);
+      setInterviewList(data || []);
+    };
+
+    fetchAllInterviews();
+  }, [user]);
 
   return (
     <div className="p-5">
