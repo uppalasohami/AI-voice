@@ -37,7 +37,8 @@ function ScheduledInterview() {
           )
         `)
         .eq("userEmail", user.email)
-        .order("id", { ascending: false });
+        .order("id", { ascending: false })
+        .limit(6);
 
       console.log("SCHEDULED INTERVIEWS WITH FEEDBACK:", data);
       console.log("ERROR:", error);
