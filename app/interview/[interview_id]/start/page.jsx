@@ -19,6 +19,31 @@ function StartInterview() {
   const {interview_id}=useParams();
   const router=useRouter();
   const [loading,setLoading]=useState();
+  // 🔥 TIMER STATES (ADDED)
+  const [seconds, setSeconds] = useState(0);
+  const [timerRunning, setTimerRunning] = useState(false);
+
+  // 🔥 TIMER EFFECT (ADDED)
+  useEffect(() => {
+    let interval;
+    if (timerRunning) {
+      interval = setInterval(() => {
+        setSeconds((prev) => prev + 1);
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [timerRunning]);
+
+  // 🔥 FORMAT TIMER (ADDED)
+  const formatTime = (time) => {
+    const hrs = Math.floor(time / 3600);
+    const mins = Math.floor((time % 3600) / 60);
+    const secs = time % 60;
+
+    return `${hrs.toString().padStart(2, "0")}:${mins
+      .toString()
+      .padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+  };
 
   useEffect(() => {
     interviewInfo && startCall();
@@ -96,12 +121,13 @@ Key Guidelines:
   const stopInterview = () => {
     vapi.stop();
     console.log("STOP...")
-    setCallEnd(true);
+    setTimerRunning(false);
     GenerateFeedback();
   };
   vapi.on("call-start", () => {
     console.log("Call started");
     toast("Call Connected");
+    setTimerRunning(true);
   });
   vapi.on("speech-start", () => {
     console.log("Assistant speech has started.");
@@ -112,8 +138,8 @@ Key Guidelines:
     setActiveUser(true);
   });
   vapi.on("call-end", () => {
-    console.log("Call has ended");
     toast("Interview Ended");
+    setTimerRunning(false); 
     GenerateFeedback();
   }); 
   // vapi.on("message",(message)=>{
@@ -190,7 +216,7 @@ Key Guidelines:
         AI Interview Session
         <span className="flex gap-2 items-center">
           <Timer />
-          00:00:00
+          {formatTime(seconds)} {/* 🔥 LIVE TIMER */}
         </span>
       </h2>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-7 mt-5">

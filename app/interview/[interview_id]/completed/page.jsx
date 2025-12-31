@@ -8,7 +8,8 @@ function InterviewComplete() {
   const router = useRouter();
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-white to-gray-100 text-center p-6">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-linear-to-b from-white to-gray-100
+ text-center p-6">
       <div className="bg-white shadow-lg rounded-2xl p-10 max-w-lg w-full">
         <div className="flex justify-center mb-6">
           <img

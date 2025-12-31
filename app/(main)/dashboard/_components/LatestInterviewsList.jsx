@@ -1,22 +1,51 @@
 "use client";
-import { Button } from '@/components/ui/button';
-import { Camera, Video } from 'lucide-react';
-import React, { useState } from 'react'
+import { supabase } from "@/services/supabaseClient";
+import React, { useEffect, useState } from "react";
+import InterviewCard from "../_components/InterviewCard";
 
-function LatestInterviewsList() {
-    const [interviewList,setInterviewList]=useState([]);
+export default function ScheduledInterview() {
+  const [user, setUser] = useState(null);
+  const [interviewList, setInterviewList] = useState([]);
+
+  useEffect(() => {
+    const load = async () => {
+      const { data } = await supabase.auth.getUser();
+      console.log("AUTH USER:", data?.user);
+      setUser(data?.user || null);
+    };
+    load();
+  }, []);
+
+  useEffect(() => {
+    if (!user) return;
+
+    const fetchInterviews = async () => {
+      const { data, error } = await supabase
+        .from("Interviews")
+        .select("*")
+        .eq("userEmail", user.email)
+        .order("id", { ascending: false });
+
+      console.log("FETCHED INTERVIEWS:", data, error);
+      setInterviewList(data || []);
+    };
+
+    fetchInterviews();
+  }, [user]);
+
   return (
-    <div className='my-5'>
-        <h2 className='font-bold text-2xl'> Previously Created Interviews</h2>
-        {interviewList?.length==0 &&
-         <div className='p-5 flex flex-col gap-3 items-center  mt-5'>
-             <Video className='h-10 w-10 text-primary'/>
-             <h2>You don't have any Interview created!</h2>
-             <Button> + Create New Interview</Button>
+    <div className="p-5">
+      <h2 className="text-xl font-bold mb-4">Scheduled Interviews</h2>
 
-        </div>}
+      {interviewList.length === 0 ? (
+        <p>No interviews found</p>
+      ) : (
+        <div className="grid grid-cols-2 xl:grid-cols-3 gap-5">
+          {interviewList.map((i) => (
+            <InterviewCard key={i.interview_id} interview={i} />
+          ))}
+        </div>
+      )}
     </div>
-  )
+  );
 }
-
-export default LatestInterviewsList
