@@ -47,6 +47,31 @@ function ScheduledInterview() {
 
     getInterviewList();
   }, [user]);
+   useEffect(() => {
+    if (loading) return;
+    if (interviewList.length > 0) return;
+
+    const fetchAllInterviews = async () => {
+      const { data, error } = await supabase
+        .from("Interviews")
+        .select(`
+          jobPosition,
+          duration,
+          interview_id,
+          "interview-feedback" (
+            feedback,
+            userEmail
+          )
+        `)
+        .order("id", { ascending: false })
+        .limit(6);
+
+      console.log("FALLBACK SCHEDULED INTERVIEWS:", data, error);
+      setInterviewList(data || []);
+    };
+
+    fetchAllInterviews();
+  }, [loading]);
 
   if (loading) return <p>Loading...</p>;
 
