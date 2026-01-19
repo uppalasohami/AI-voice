@@ -3,47 +3,67 @@ import { UserDetailContext } from '@/context/UserDetailContext';
 import { supabase } from '@/services/supabaseClient'
 import React, { useContext, useEffect, useState } from 'react'
 
-function provider({children}) {
+function UserProvider({children}) {
     const [user,setUser]=useState();
-    useEffect(()=>{
-        CreateNewUser();
 
-    },[])
-    const CreateNewUser=()=>{
-        supabase.auth.getUser().then(async({data:{user}})=>{
-            let { data: Users, error } = await supabase
+    useEffect(()=>{
+        let mounted = true;
+
+        const ensureUserRecord = async (authUser) => {
+            if (!authUser?.email) return;
+            let { data: Users } = await supabase
                 .from('Users')
-                .select("*")
-                .eq('email',user?.email);
-            console.log(Users)
-            if(Users?.length==0)
-            {
-                const { data, error }=await supabase.from("Users")
-                .insert([
-                    {
-                        name:user?.user_metadata?.name,
-                        email:user?.email,
-                        picture:user?.user_metadata?.picture
-                    }
-                ])
-                console.log(data);
-                setUser(data);
+                .select('*')
+                .eq('email',authUser.email);
+            if(!Users || Users.length === 0) {
+                const { data } = await supabase.from('Users')
+                    .insert([
+                        {
+                            name:authUser?.user_metadata?.name,
+                            email:authUser.email,
+                            picture:authUser?.user_metadata?.picture
+                        }
+                    ]).select().single();
+                if (mounted) setUser(data || null);
                 return;
             }
-            setUser(Users[0]);
-        
+            if (mounted) setUser(Users[0]);
+        }
 
-        })
+        const init = async () => {
+            const { data } = await supabase.auth.getUser();
+            const authUser = data?.user;
+            if (authUser?.email) {
+                await ensureUserRecord(authUser);
+            }
+        }
 
-    }
+        init();
+
+        const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
+            const authUser = session?.user;
+            if (authUser?.email) {
+                ensureUserRecord(authUser);
+            } else {
+                if (mounted) setUser(null);
+            }
+        });
+
+        return () => {
+            mounted = false;
+            listener?.subscription?.unsubscribe?.();
+        }
+
+    },[])
+
   return (
     <UserDetailContext.Provider value={{ user , setUser }}>
-    <div>{children}</div>
+      <div>{children}</div>
     </UserDetailContext.Provider>
   )
 }
 
-export default provider
+export default UserProvider
 export const useUser=()=>{
     const context=useContext(UserDetailContext);
     return context;
